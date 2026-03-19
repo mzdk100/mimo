@@ -1,0 +1,19 @@
+[package]
+name = "mimo"
+version = "0.1.0"
+edition = "2024"
+description = "Xiaomi MiMo API client library for Rust"
+license = "MIT"
+repository = "https://github.com/mzdk100/mimo"
+keywords = ["xiaomi", "mimo", "ai", "llm", "api"]
+categories = ["api-bindings", "web-programming"]
+
+[dependencies]
+reqwest = { version = "0.13.2", default-features = false, features = ["json", "native-tls", "stream"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+tokio = { version = "1.50.0", features = ["full"] }
+futures = "0.3.32"
+thiserror = "2.0.18"
+eventsource-stream = "0.2.3"
+base64 = "0.22.1"
