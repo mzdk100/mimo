@@ -8,7 +8,7 @@ license = "MIT"
 repository = "https://github.com/mzdk100/mimo"
 documentation = "https://docs.rs/mimo-api"
 readme = "README.md"
-keywords = ["xiaomi", "mimo", "ai", "llm", "api", "openai-compatible"]
+keywords = ["xiaomi", "mimo", "llm", "api", "openai-compatible"]
 categories = ["api-bindings", "web-programming", "asynchronous"]
 exclude = ["examples/*", "tests/*", "*.wav", "*.mp3", "docs.html", "tts.md"]
 
