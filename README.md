@@ -2,8 +2,8 @@
 
 一个用于小米MiMo开放平台API的Rust客户端库。
 
-[![Crates.io](https://img.shields.io/crates/v/mimo.svg)](https://crates.io/crates/mimo)
-[![Documentation](https://docs.rs/mimo/badge.svg)](https://docs.rs/mimo)
+[![Crates.io](https://img.shields.io/crates/v/mimo-api.svg)](https://crates.io/crates/mimo-api)
+[![Documentation](https://docs.rs/mimo-api/badge.svg)](https://docs.rs/mimo-api)
 [![CI](https://github.com/your-repo/mimo/workflows/CI/badge.svg)](https://github.com/your-repo/mimo/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -25,7 +25,7 @@
 
 ```toml
 [dependencies]
-mimo = "0.1"
+mimo-api = "0.1"
 ```
 
 ## 快速开始
@@ -33,7 +33,7 @@ mimo = "0.1"
 ### 基础对话
 
 ```rust
-use mimo::{Client, ChatRequest};
+use mimo_api::{Client, ChatRequest};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -65,7 +65,7 @@ XIAOMI_API_KEY=your_api_key_here
 ### 自定义配置
 
 ```rust
-use mimo::Client;
+use mimo_api::Client;
 
 // 从环境变量
 let client = Client::from_env()?;
@@ -91,7 +91,7 @@ let client = Client::builder()
 | `mimo-v2-flash` | 轻量模型 | 快速响应、简单任务 |
 
 ```rust
-use mimo::{ChatRequest, Model};
+use mimo_api::{ChatRequest, Model};
 
 // 使用模型常量
 let request = ChatRequest::new(Model::MIMO_V2_PRO);
@@ -105,7 +105,7 @@ let request = ChatRequest::flash();    // mimo-v2-flash
 
 ## API 文档
 
-完整的API文档请参考：[https://docs.rs/mimo](https://docs.rs/mimo)
+完整的API文档请参考：[https://docs.rs/mimo-api](https://docs.rs/mimo-api)
 
 ## 示例
 

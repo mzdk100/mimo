@@ -3,7 +3,7 @@
 //! Usage: XIAOMI_API_KEY=your_key cargo run --example streaming_chat
 
 use futures::StreamExt;
-use mimo::{ChatRequest, Client};
+use mimo_api::{ChatRequest, Client};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

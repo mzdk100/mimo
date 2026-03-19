@@ -5,7 +5,7 @@
 //!
 //! This example uses MiMo V2 TTS model to convert text to speech.
 
-use mimo::{Audio, ChatRequest, Client, Voice};
+use mimo_api::{Audio, ChatRequest, Client, Voice};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

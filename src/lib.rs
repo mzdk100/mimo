@@ -1,4 +1,4 @@
-//! # MiMo - Xiaomi MiMo API Client for Rust
+//! # MiMo API - Xiaomi MiMo API Client for Rust
 //!
 //! A Rust client library for Xiaomi MiMo Open Platform API, compatible with OpenAI API format.
 //!
@@ -15,7 +15,7 @@
 //! ## Example
 //!
 //! ```rust,no_run
-//! use mimo::{Client, Message, ChatRequest};
+//! use mimo_api::{Client, Message, ChatRequest};
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {

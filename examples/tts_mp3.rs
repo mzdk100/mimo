@@ -5,7 +5,7 @@
 //! Run with: cargo run --example tts_mp3
 
 use {
-    mimo::{AudioFormat, Client, Voice},
+    mimo_api::{AudioFormat, Client, Voice},
     tokio::fs::write,
 };
 

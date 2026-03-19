@@ -2,7 +2,7 @@
 //!
 //! Usage: XIAOMI_API_KEY=your_key cargo run --example function_calling
 
-use mimo::{schema, ChatRequest, Client, Message, ParameterBuilder, Tool};
+use mimo_api::{schema, ChatRequest, Client, Message, ParameterBuilder, Tool};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

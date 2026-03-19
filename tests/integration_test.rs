@@ -3,7 +3,7 @@
 //! These tests require a valid XIAOMI_API_KEY environment variable.
 //! Run with: cargo test --test integration_test -- --ignored
 
-use mimo::{ChatRequest, Client, Model, Tool};
+use mimo_api::{ChatRequest, Client, Model, Tool};
 
 #[tokio::test]
 #[ignore = "Requires XIAOMI_API_KEY environment variable"]

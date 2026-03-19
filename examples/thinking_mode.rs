@@ -4,7 +4,7 @@
 //!
 //! Note: Thinking mode is best supported by MiMo V2 Pro model.
 
-use mimo::{ChatRequest, Client};
+use mimo_api::{ChatRequest, Client};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

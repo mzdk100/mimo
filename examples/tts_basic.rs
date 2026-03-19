@@ -6,7 +6,7 @@
 //! Run with: cargo run --example tts_basic
 
 use {
-    mimo::{Client, Voice},
+    mimo_api::{Client, Voice},
     tokio::fs::write,
 };
 

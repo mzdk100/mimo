@@ -48,7 +48,7 @@ impl Audio {
     /// # Example
     ///
     /// ```rust
-    /// use mimo::{Audio, AudioFormat, Voice};
+    /// use mimo_api::{Audio, AudioFormat, Voice};
     ///
     /// let audio = Audio::new()
     ///     .format(AudioFormat::Wav)
@@ -116,7 +116,7 @@ impl ResponseAudio {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use mimo::{Client, Audio, Voice, Message};
+    /// use mimo_api::{Client, Audio, Voice, Message};
     ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -209,7 +209,7 @@ impl TtsStyle {
     /// # Example
     ///
     /// ```rust
-    /// use mimo::TtsStyle;
+    /// use mimo_api::TtsStyle;
     ///
     /// let style = TtsStyle::new()
     ///     .with_style("开心")
@@ -240,7 +240,7 @@ impl TtsStyle {
 /// # Example
 ///
 /// ```rust
-/// use mimo::styled_text;
+/// use mimo_api::styled_text;
 ///
 /// let text = styled_text("开心", "明天就是周五了，真开心！");
 /// assert!(text.starts_with("<style>开心</style>"));

@@ -1,12 +1,16 @@
 [package]
-name = "mimo"
+name = "mimo-api"
 version = "0.1.0"
 edition = "2024"
 description = "Xiaomi MiMo API client library for Rust"
+authors = ["SmileSky <mzdk100@foxmail.com>"]
 license = "MIT"
 repository = "https://github.com/mzdk100/mimo"
-keywords = ["xiaomi", "mimo", "ai", "llm", "api"]
-categories = ["api-bindings", "web-programming"]
+documentation = "https://docs.rs/mimo-api"
+readme = "README.md"
+keywords = ["xiaomi", "mimo", "ai", "llm", "api", "openai-compatible"]
+categories = ["api-bindings", "web-programming", "asynchronous"]
+exclude = ["examples/*", "tests/*", "*.wav", "*.mp3", "docs.html", "tts.md"]
 
 [dependencies]
 reqwest = { version = "0.13.2", default-features = false, features = ["json", "native-tls", "stream"] }

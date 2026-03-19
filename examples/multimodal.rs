@@ -4,7 +4,7 @@
 //!
 //! Note: This example uses MiMo V2 Omni which supports multimodal inputs.
 
-use mimo::{ChatRequest, Client, ContentPart, Message, MessageContent};
+use mimo_api::{ChatRequest, Client, ContentPart, Message, MessageContent};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

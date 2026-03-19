@@ -28,7 +28,7 @@ impl Client {
     /// # Example
     ///
     /// ```rust
-    /// use mimo::Client;
+    /// use mimo_api::Client;
     ///
     /// let client = Client::new("your-api-key");
     /// ```
@@ -49,7 +49,7 @@ impl Client {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use mimo::Client;
+    /// use mimo_api::Client;
     ///
     /// // Assuming XIAOMI_API_KEY is set in environment
     /// let client = Client::from_env()?;
@@ -85,7 +85,7 @@ impl Client {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use mimo::{Client, ChatRequest, Message};
+    /// use mimo_api::{Client, ChatRequest, Message};
     ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -125,7 +125,7 @@ impl Client {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use mimo::{Client, ChatRequest, Message};
+    /// use mimo_api::{Client, ChatRequest, Message};
     /// use futures::StreamExt;
     ///
     /// #[tokio::main]
@@ -207,7 +207,7 @@ impl Client {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use mimo::{Client, Voice};
+    /// use mimo_api::{Client, Voice};
     ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -235,7 +235,7 @@ impl Client {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use mimo::{Client, Voice};
+    /// use mimo_api::{Client, Voice};
     ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -321,7 +321,7 @@ impl TtsRequestBuilder {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use mimo::{Client, Voice, AudioFormat};
+    /// use mimo_api::{Client, Voice, AudioFormat};
     ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
