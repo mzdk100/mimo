@@ -3,6 +3,7 @@
 //! This module provides types for configuring audio output, particularly for
 //! text-to-speech (TTS) synthesis using the `mimo-v2-tts` model.
 
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 
 /// Audio output format.
@@ -121,21 +122,21 @@ impl ResponseAudio {
     /// #[tokio::main]
     /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let client = Client::from_env()?;
-    ///     
+    ///
     ///     let response = client.tts("Hello, world!")
     ///         .voice(Voice::DefaultEn)
     ///         .send()
     ///         .await?;
-    ///     
+    ///
     ///     let audio = response.audio()?;
     ///     let audio_bytes = audio.decode_data()?;
     ///     std::fs::write("output.wav", audio_bytes)?;
     ///     Ok(())
     /// }
     /// ```
-    pub fn decode_data(&self) -> Result<Vec<u8>, base64::DecodeError> {
+    pub fn decode_data(&self) -> Result<Vec<u8>> {
         use base64::Engine;
-        base64::engine::general_purpose::STANDARD.decode(&self.data)
+        base64::engine::general_purpose::STANDARD.decode(&self.data).map_err(Into::into)
     }
 
     /// Get the transcript of the synthesized text.
@@ -174,9 +175,9 @@ pub struct DeltaAudio {
 
 impl DeltaAudio {
     /// Decode the base64 audio data to bytes.
-    pub fn decode_data(&self) -> Result<Vec<u8>, base64::DecodeError> {
+    pub fn decode_data(&self) -> Result<Vec<u8>> {
         use base64::Engine;
-        base64::engine::general_purpose::STANDARD.decode(&self.data)
+        base64::engine::general_purpose::STANDARD.decode(&self.data).map_err(Into::into)
     }
 }
 

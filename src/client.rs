@@ -1,12 +1,15 @@
 //! HTTP client for the MiMo API.
 
-use crate::error::{Error, Result};
-use crate::types::*;
-use eventsource_stream::Eventsource;
-use futures::stream::BoxStream;
-use futures::StreamExt;
-use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
-use std::env;
+use {
+    crate::{
+        error::{Error, Result},
+        types::*,
+    },
+    eventsource_stream::Eventsource,
+    futures::{StreamExt, stream::BoxStream},
+    reqwest::header::{CONTENT_TYPE, HeaderMap, HeaderValue},
+    std::env,
+};
 
 const API_BASE_URL: &str = "https://api.xiaomimimo.com/v1";
 const ENV_API_KEY: &str = "XIAOMI_API_KEY";
@@ -53,7 +56,7 @@ impl Client {
     ///
     /// // Assuming XIAOMI_API_KEY is set in environment
     /// let client = Client::from_env()?;
-    /// # Ok::<(), mimo::Error>(())
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn from_env() -> Result<Self> {
         let api_key = env::var(ENV_API_KEY).map_err(|_| Error::MissingApiKey)?;
@@ -240,13 +243,13 @@ impl Client {
     /// #[tokio::main]
     /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let client = Client::from_env()?;
-    ///     
+    ///
     ///     // Synthesize speech with "开心" (happy) style
     ///     let response = client.tts_styled("开心", "明天就是周五了，真开心！")
     ///         .voice(Voice::DefaultZh)
     ///         .send()
     ///         .await?;
-    ///     
+    ///
     ///     let audio = response.audio()?;
     ///     let audio_bytes = audio.decode_data()?;
     ///     std::fs::write("output.wav", audio_bytes)?;
@@ -255,6 +258,93 @@ impl Client {
     /// ```
     pub fn tts_styled(&self, style: &str, text: &str) -> TtsRequestBuilder {
         TtsRequestBuilder::new(self.clone(), styled_text(style, text))
+    }
+
+    /// Create a streaming text-to-speech request builder.
+    ///
+    /// This method creates a builder for streaming speech synthesis using the `mimo-v2-tts` model.
+    /// Streaming TTS delivers audio data in real-time chunks.
+    ///
+    /// # Arguments
+    ///
+    /// * `text` - The text to synthesize. This text will be placed in an `assistant` message.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use mimo_api::{Client, Voice};
+    /// use futures::StreamExt;
+    /// use tokio::fs::File;
+    /// use tokio::io::AsyncWriteExt;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let client = Client::from_env()?;
+    ///
+    ///     let mut stream = client.tts_stream("Hello, world!")
+    ///         .voice(Voice::DefaultEn)
+    ///         .send()
+    ///         .await?;
+    ///
+    ///     let mut file = File::create("output.pcm").await?;
+    ///     let mut total_bytes = 0;
+    ///
+    ///     while let Some(chunk) = stream.next().await {
+    ///         let audio_bytes = chunk?;
+    ///         file.write_all(&audio_bytes).await?;
+    ///         total_bytes += audio_bytes.len();
+    ///     }
+    ///
+    ///     println!("Total bytes: {}", total_bytes);
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn tts_stream(&self, text: impl Into<String>) -> StreamingTtsRequestBuilder {
+        StreamingTtsRequestBuilder::new(self.clone(), text.into())
+    }
+
+    /// Create a streaming text-to-speech request builder with styled text.
+    ///
+    /// This method allows you to apply style controls to the streaming synthesized speech.
+    ///
+    /// # Arguments
+    ///
+    /// * `style` - The style to apply (e.g., "开心", "悲伤", "变快", "变慢")
+    /// * `text` - The text to synthesize
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use mimo_api::{Client, Voice};
+    /// use futures::StreamExt;
+    /// use tokio::fs::File;
+    /// use tokio::io::AsyncWriteExt;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let client = Client::from_env()?;
+    ///
+    ///     // Synthesize speech with "开心" (happy) style
+    ///     let mut stream = client.tts_styled_stream("开心", "明天就是周五了，真开心！")
+    ///         .voice(Voice::DefaultZh)
+    ///         .send()
+    ///         .await?;
+    ///
+    ///     let mut file = File::create("output.pcm").await?;
+    ///     let mut total_bytes = 0;
+    ///
+    ///     while let Some(chunk) = stream.next().await {
+    ///         let audio_bytes = chunk?;
+    ///         file.write_all(&audio_bytes).await?;
+    ///         total_bytes += audio_bytes.len();
+    ///     }
+    ///
+    ///     println!("Total bytes: {}", total_bytes);
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn tts_styled_stream(&self, style: &str, text: &str) -> StreamingTtsRequestBuilder {
+        StreamingTtsRequestBuilder::new(self.clone(), styled_text(style, text))
     }
 }
 
@@ -391,5 +481,306 @@ impl TtsResponse {
     /// Get the underlying chat response.
     pub fn into_inner(self) -> ChatResponse {
         self.0
+    }
+}
+
+/// Builder for streaming text-to-speech requests.
+///
+/// This builder provides a fluent API for configuring streaming TTS requests.
+#[derive(Debug, Clone)]
+pub struct StreamingTtsRequestBuilder {
+    client: Client,
+    text: String,
+    user_message: Option<String>,
+    voice: Voice,
+}
+
+impl StreamingTtsRequestBuilder {
+    /// Create a new streaming TTS request builder.
+    fn new(client: Client, text: String) -> Self {
+        Self {
+            client,
+            text,
+            user_message: None,
+            voice: Voice::default(),
+        }
+    }
+
+    /// Set the voice for synthesis.
+    ///
+    /// Available voices:
+    /// - `Voice::MimoDefault` - MiMo default voice (balanced tone)
+    /// - `Voice::DefaultEn` - Default English female voice
+    /// - `Voice::DefaultZh` - Default Chinese female voice
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use mimo_api::{Client, Voice};
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let client = Client::from_env()?;
+    ///
+    ///     let stream = client.tts_stream("Hello!")
+    ///         .voice(Voice::DefaultEn)
+    ///         .send()
+    ///         .await?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn voice(mut self, voice: Voice) -> Self {
+        self.voice = voice;
+        self
+    }
+
+    /// Add a user message to influence the synthesis style.
+    ///
+    /// The user message can help adjust the tone and style of the synthesized speech.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use mimo_api::Client;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let client = Client::from_env()?;
+    ///
+    ///     let stream = client.tts_stream("Hello there!")
+    ///         .user_message("Speak in a friendly, conversational tone")
+    ///         .send()
+    ///         .await?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn user_message(mut self, message: impl Into<String>) -> Self {
+        self.user_message = Some(message.into());
+        self
+    }
+
+    /// Send the streaming TTS request and return the response stream.
+    ///
+    /// # Returns
+    ///
+    /// A `StreamingTtsResponse` that yields audio data chunks.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use mimo_api::{Client, Voice};
+    /// use futures::StreamExt;
+    /// use tokio::fs::File;
+    /// use tokio::io::AsyncWriteExt;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let client = Client::from_env()?;
+    ///
+    ///     let mut stream = client.tts_stream("Hello, world!")
+    ///         .voice(Voice::DefaultEn)
+    ///         .send()
+    ///         .await?;
+    ///
+    ///     let mut file = File::create("output.pcm").await?;
+    ///     let mut total_bytes = 0;
+    ///
+    ///     while let Some(result) = stream.next().await {
+    ///         let audio_bytes = result?;
+    ///         file.write_all(&audio_bytes).await?;
+    ///         total_bytes += audio_bytes.len();
+    ///     }
+    ///
+    ///     println!("Total bytes: {}", total_bytes);
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn send(self) -> Result<StreamingTtsResponse> {
+        let mut messages = Vec::new();
+
+        // Add optional user message
+        if let Some(user_msg) = self.user_message {
+            messages.push(Message::user(MessageContent::Text(user_msg)));
+        }
+
+        // Add assistant message with text to synthesize
+        messages.push(Message::assistant(MessageContent::Text(self.text)));
+
+        let request = ChatRequest {
+            model: Model::MiMoV2Tts.to_string(),
+            messages,
+            stream: Some(true),
+            audio: Some(Audio {
+                format: Some(AudioFormat::Pcm), // PCM is recommended for streaming
+                voice: Some(self.voice),
+            }),
+            ..Default::default()
+        };
+
+        let stream = self.client.chat_stream(request).await?;
+        Ok(StreamingTtsResponse::new(stream))
+    }
+}
+
+/// Response from a streaming text-to-speech request.
+///
+/// This type wraps the underlying stream and provides convenience methods
+/// for consuming audio data.
+pub struct StreamingTtsResponse {
+    stream: BoxStream<'static, Result<StreamChunk>>,
+    total_bytes: u64,
+    chunk_count: u32,
+}
+
+impl StreamingTtsResponse {
+    /// Create a new streaming TTS response.
+    fn new(stream: BoxStream<'static, Result<StreamChunk>>) -> Self {
+        Self {
+            stream,
+            total_bytes: 0,
+            chunk_count: 0,
+        }
+    }
+
+    /// Collect all audio chunks and return them as a single byte vector.
+    ///
+    /// This is a convenience method for non-streaming use cases where you
+    /// want to wait for all audio data before processing it.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use mimo_api::Client;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let client = Client::from_env()?;
+    ///
+    ///     let mut stream = client.tts_stream("Hello, world!").send().await?;
+    ///     let audio_bytes = stream.collect_audio().await?;
+    ///
+    ///     tokio::fs::write("output.pcm", &audio_bytes).await?;
+    ///     println!("Total bytes: {}", audio_bytes.len());
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn collect_audio(&mut self) -> Result<Vec<u8>> {
+        let mut all_bytes = Vec::new();
+
+        while let Some(chunk) = self.stream.next().await {
+            if let Some(audio_bytes) = self.process_chunk(chunk?)? {
+                all_bytes.extend(audio_bytes);
+            }
+        }
+
+        Ok(all_bytes)
+    }
+
+    /// Save all audio chunks to a file.
+    ///
+    /// This is a convenience method that collects all audio data and writes it to a file.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use mimo_api::Client;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let client = Client::from_env()?;
+    ///
+    ///     let mut stream: mimo_api::StreamingTtsResponse = client.tts_stream("Hello, world!").send().await?;
+    ///     stream.save_to_file("output.pcm").await?;
+    ///
+    ///     println!("Audio saved to file");
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn save_to_file<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<()> {
+        use tokio::fs::File;
+        use tokio::io::AsyncWriteExt;
+
+        let mut file = File::create(path).await?;
+
+        while let Some(chunk) = self.stream.next().await {
+            if let Some(audio_bytes) = self.process_chunk(chunk?)? {
+                file.write_all(&audio_bytes).await?;
+            }
+        }
+
+        file.flush().await?;
+        Ok(())
+    }
+
+    /// Process a stream chunk and return audio bytes if present.
+    fn process_chunk(&mut self, chunk: StreamChunk) -> Result<Option<Vec<u8>>> {
+        if !chunk.choices.is_empty()
+            && let Some(audio) = &chunk.choices[0].delta.audio
+        {
+            let bytes = audio.decode_data()?;
+            self.total_bytes += bytes.len() as u64;
+            self.chunk_count += 1;
+            return Ok(Some(bytes));
+        }
+        Ok(None)
+    }
+
+    /// Get the total number of bytes received so far.
+    pub fn total_bytes(&self) -> u64 {
+        self.total_bytes
+    }
+
+    /// Get the number of audio chunks received so far.
+    pub fn chunk_count(&self) -> u32 {
+        self.chunk_count
+    }
+}
+
+impl futures::Stream for StreamingTtsResponse {
+    type Item = Result<Vec<u8>>;
+
+    fn poll_next(
+        mut self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Self::Item>> {
+        // Process chunks until we find one with audio data or the stream ends
+        loop {
+            match std::pin::Pin::new(&mut self.stream).poll_next(cx) {
+                std::task::Poll::Ready(Some(Ok(chunk))) => {
+                    // Check if this is the final chunk with finish_reason
+                    let is_final = chunk.choices.first().and_then(|c| c.finish_reason.as_ref()).is_some();
+
+                    match self.process_chunk(chunk) {
+                        Ok(Some(bytes)) => {
+                            // Return audio data from this chunk
+                            return std::task::Poll::Ready(Some(Ok(bytes)));
+                        }
+                        Ok(None) => {
+                            // No audio data in this chunk
+                            if is_final {
+                                // Stream has ended, no more audio data
+                                return std::task::Poll::Ready(None);
+                            }
+                            // Continue to next chunk
+                            continue;
+                        }
+                        Err(e) => return std::task::Poll::Ready(Some(Err(e))),
+                    }
+                }
+                std::task::Poll::Ready(Some(Err(e))) => {
+                    let error_msg = format!("Stream error: {}", e);
+                    return std::task::Poll::Ready(Some(Err(Error::StreamError(error_msg))));
+                }
+                std::task::Poll::Ready(None) => {
+                    // Stream has ended normally
+                    return std::task::Poll::Ready(None);
+                }
+                std::task::Poll::Pending => return std::task::Poll::Pending,
+            }
+        }
     }
 }

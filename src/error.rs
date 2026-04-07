@@ -44,6 +44,10 @@ pub enum Error {
     /// IO error.
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
+
+    /// Base64 decode error.
+    #[error("Base64 decode error: {0}")]
+    Base64DecodeError(#[from] base64::DecodeError),
 }
 
 impl Error {
