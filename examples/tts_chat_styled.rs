@@ -20,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let request = ChatRequest::tts()
         .user("你好，欢迎使用小米MiMo语音合成服务。")
-        .assistant("")  // TTS model requires assistant message
+        .assistant("") // TTS model requires assistant message
         .audio(Audio::wav());
 
     match client.chat(request).await {
@@ -47,7 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let request = ChatRequest::tts()
         .user("今天天气真不错，适合出去散步。")
-        .assistant("")  // TTS model requires assistant message
+        .assistant("") // TTS model requires assistant message
         .audio(Audio::mp3().voice(Voice::DefaultZh));
 
     match client.chat(request).await {
@@ -70,7 +70,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let request = ChatRequest::tts()
         .user("Hello, this is a test of the MiMo text-to-speech system.")
-        .assistant("")  // TTS model requires assistant message
+        .assistant("") // TTS model requires assistant message
         .audio(Audio::wav().voice(Voice::DefaultEn));
 
     match client.chat(request).await {
@@ -92,11 +92,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let long_text = "MiMo是一个强大的大语言模型，支持多种功能，包括对话、翻译、代码生成等。\
                      它还支持语音合成功能，可以将文字转换为自然的语音输出。\
                      MiMo的语音合成支持多种声音和格式，适用于各种应用场景。";
-    println!("   Text: '{}...'\n", long_text.chars().take(50).collect::<String>());
+    println!(
+        "   Text: '{}...'\n",
+        long_text.chars().take(50).collect::<String>()
+    );
 
     let request = ChatRequest::tts()
         .user(long_text)
-        .assistant("")  // TTS model requires assistant message
+        .assistant("") // TTS model requires assistant message
         .audio(Audio::wav().voice(Voice::MimoDefault));
 
     match client.chat(request).await {

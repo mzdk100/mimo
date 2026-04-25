@@ -48,11 +48,13 @@ pub use types::*;
 
 /// Re-export commonly used types
 pub mod prelude {
-    pub use crate::client::{Client, StreamingTtsRequestBuilder, StreamingTtsResponse, TtsRequestBuilder, TtsResponse};
+    pub use crate::client::{
+        Client, StreamingTtsRequestBuilder, StreamingTtsResponse, TtsRequestBuilder, TtsResponse,
+    };
     pub use crate::types::{
-        styled_text, Audio, AudioFormat, ChatRequest, ChatResponse, Message, MessageContent, Model,
-        ResponseAudio, Role, StreamChunk, Tool, ToolChoice, TtsStyle, Voice, Thinking, ThinkingType,
-        UserLocation,
+        Audio, AudioFormat, ChatRequest, ChatResponse, Message, MessageContent, Model,
+        ResponseAudio, Role, StreamChunk, Thinking, ThinkingType, Tool, ToolChoice, TtsStyle,
+        UserLocation, Voice, styled_text,
     };
 }
 

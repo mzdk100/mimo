@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 // Import audio types from the audio module
-use super::{ResponseAudio, DeltaAudio};
+use super::{DeltaAudio, ResponseAudio};
 
 /// Chat completion response.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -236,8 +236,8 @@ pub struct DeltaFunctionCall {
 }
 
 // Import types from other modules
-use super::message::{ToolCall, ToolCallType};
 use super::Role;
+use super::message::{ToolCall, ToolCallType};
 
 #[cfg(test)]
 mod tests {

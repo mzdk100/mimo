@@ -104,10 +104,7 @@ impl ContentPart {
         Self {
             content_type: ContentType::ImageUrl,
             text: None,
-            image_url: Some(ImageUrl {
-                url,
-                detail: None,
-            }),
+            image_url: Some(ImageUrl { url, detail: None }),
             input_audio: None,
             video_url: None,
         }

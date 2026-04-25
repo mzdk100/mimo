@@ -316,19 +316,22 @@ impl ChatRequest {
 
     /// Add a system message.
     pub fn system(mut self, content: impl Into<String>) -> Self {
-        self.messages.push(Message::system(MessageContent::Text(content.into())));
+        self.messages
+            .push(Message::system(MessageContent::Text(content.into())));
         self
     }
 
     /// Add a user message.
     pub fn user(mut self, content: impl Into<String>) -> Self {
-        self.messages.push(Message::user(MessageContent::Text(content.into())));
+        self.messages
+            .push(Message::user(MessageContent::Text(content.into())));
         self
     }
 
     /// Add an assistant message.
     pub fn assistant(mut self, content: impl Into<String>) -> Self {
-        self.messages.push(Message::assistant(MessageContent::Text(content.into())));
+        self.messages
+            .push(Message::assistant(MessageContent::Text(content.into())));
         self
     }
 
@@ -445,8 +448,14 @@ mod tests {
         assert_eq!(Model::MiMoV25Pro.as_str(), "mimo-v2.5-pro");
         assert_eq!(Model::MiMoV25.as_str(), "mimo-v2.5");
         assert_eq!(Model::MiMoV25Tts.as_str(), "mimo-v2.5-tts");
-        assert_eq!(Model::MiMoV25TtsVoiceDesign.as_str(), "mimo-v2.5-tts-voicedesign");
-        assert_eq!(Model::MiMoV25TtsVoiceClone.as_str(), "mimo-v2.5-tts-voiceclone");
+        assert_eq!(
+            Model::MiMoV25TtsVoiceDesign.as_str(),
+            "mimo-v2.5-tts-voicedesign"
+        );
+        assert_eq!(
+            Model::MiMoV25TtsVoiceClone.as_str(),
+            "mimo-v2.5-tts-voiceclone"
+        );
         assert_eq!(Model::MiMoV2Pro.as_str(), "mimo-v2-pro");
         assert_eq!(Model::MiMoV2Omni.as_str(), "mimo-v2-omni");
         assert_eq!(Model::MiMoV2Tts.as_str(), "mimo-v2-tts");

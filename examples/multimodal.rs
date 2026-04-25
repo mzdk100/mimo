@@ -50,7 +50,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let video_url = "https://img.tukuppt.com/video_show/2475824/00/08/40/5d21787a4d185.mp4";
 
     let content = MessageContent::Parts(vec![
-        ContentPart::text("Please describe what happens in this video. What are the main actions and events?"),
+        ContentPart::text(
+            "Please describe what happens in this video. What are the main actions and events?",
+        ),
         ContentPart::video_url(video_url),
     ]);
 
@@ -107,7 +109,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   Analyzing both image and audio together...\n");
 
     let content = MessageContent::Parts(vec![
-        ContentPart::text("I'm showing you an image and playing an audio. Please describe both and explain any relationship between them."),
+        ContentPart::text(
+            "I'm showing you an image and playing an audio. Please describe both and explain any relationship between them.",
+        ),
         ContentPart::image_url("https://picsum.photos/seed/combined/800/600"),
     ]);
 

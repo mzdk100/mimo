@@ -2,7 +2,7 @@
 //!
 //! Usage: XIAOMI_API_KEY=your_key cargo run --example function_calling
 
-use mimo_api::{schema, ChatRequest, Client, Message, ParameterBuilder, Tool};
+use mimo_api::{ChatRequest, Client, Message, ParameterBuilder, Tool, schema};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -14,7 +14,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Define a weather function tool
     let weather_params = ParameterBuilder::new()
         .type_object()
-        .required_property("location", schema::string_with_description("The city and country"))
+        .required_property(
+            "location",
+            schema::string_with_description("The city and country"),
+        )
         .required_property("unit", schema::enum_values(&["celsius", "fahrenheit"]))
         .build();
 
@@ -37,14 +40,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(tool_calls) = &response.choices[0].message.tool_calls {
         println!("Model requested tool calls:");
         for tool_call in tool_calls {
-            println!(
-                "  Function: {}",
-                tool_call.function.name
-            );
-            println!(
-                "  Arguments: {}",
-                tool_call.function.arguments
-            );
+            println!("  Function: {}", tool_call.function.name);
+            println!("  Arguments: {}", tool_call.function.arguments);
 
             // Simulate calling the weather API
             let result = simulate_weather_api(&tool_call.function.arguments);
@@ -54,8 +51,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let follow_up = ChatRequest::flash()
                 .system("You are a helpful weather assistant.")
                 .user("What's the weather like in Tokyo, Japan in celsius?")
-                .message(Message::assistant(response.choices[0].message.content.clone())
-                    .with_tool_calls(tool_calls.clone()))
+                .message(
+                    Message::assistant(response.choices[0].message.content.clone())
+                        .with_tool_calls(tool_calls.clone()),
+                )
                 .message(Message::tool(&tool_call.id, result));
 
             let final_response = client.chat(follow_up).await?;

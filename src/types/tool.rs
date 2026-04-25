@@ -235,7 +235,8 @@ impl ParameterBuilder {
 
     /// Set the schema type.
     pub fn type_object(mut self) -> Self {
-        self.params.insert("type".to_string(), Value::String("object".to_string()));
+        self.params
+            .insert("type".to_string(), Value::String("object".to_string()));
         self
     }
 
@@ -246,9 +247,12 @@ impl ParameterBuilder {
             .params
             .entry("properties".to_string())
             .or_insert_with(|| Value::Object(serde_json::Map::new()));
-        
+
         if let Value::Object(props) = properties {
-            props.insert(name.to_string(), Value::Object(schema.into_iter().collect()));
+            props.insert(
+                name.to_string(),
+                Value::Object(schema.into_iter().collect()),
+            );
         }
 
         // Add to required
@@ -256,7 +260,7 @@ impl ParameterBuilder {
             .params
             .entry("required".to_string())
             .or_insert_with(|| Value::Array(Vec::new()));
-        
+
         if let Value::Array(req) = required {
             req.push(Value::String(name.to_string()));
         }
@@ -270,9 +274,12 @@ impl ParameterBuilder {
             .params
             .entry("properties".to_string())
             .or_insert_with(|| Value::Object(serde_json::Map::new()));
-        
+
         if let Value::Object(props) = properties {
-            props.insert(name.to_string(), Value::Object(schema.into_iter().collect()));
+            props.insert(
+                name.to_string(),
+                Value::Object(schema.into_iter().collect()),
+            );
         }
 
         self
@@ -328,7 +335,10 @@ pub mod schema {
     pub fn array(items: HashMap<String, Value>) -> HashMap<String, Value> {
         let mut map = HashMap::new();
         map.insert("type".to_string(), Value::String("array".to_string()));
-        map.insert("items".to_string(), Value::Object(items.into_iter().collect()));
+        map.insert(
+            "items".to_string(),
+            Value::Object(items.into_iter().collect()),
+        );
         map
     }
 
@@ -338,7 +348,12 @@ pub mod schema {
         map.insert("type".to_string(), Value::String("string".to_string()));
         map.insert(
             "enum".to_string(),
-            Value::Array(values.iter().map(|v| Value::String(v.to_string())).collect()),
+            Value::Array(
+                values
+                    .iter()
+                    .map(|v| Value::String(v.to_string()))
+                    .collect(),
+            ),
         );
         map
     }
@@ -374,13 +389,10 @@ mod tests {
     fn test_tool_with_parameters() {
         let mut params = HashMap::new();
         params.insert("type".to_string(), Value::String("object".to_string()));
-        
-        let tool = Tool::function_with_params(
-            "get_weather",
-            "Get weather for a location",
-            params.clone(),
-        );
-        
+
+        let tool =
+            Tool::function_with_params("get_weather", "Get weather for a location", params.clone());
+
         assert!(tool.function.as_ref().unwrap().parameters.is_some());
     }
 
@@ -391,7 +403,10 @@ mod tests {
             .required_property("location", schema::string())
             .build();
 
-        assert_eq!(params.get("type").unwrap(), &Value::String("object".to_string()));
+        assert_eq!(
+            params.get("type").unwrap(),
+            &Value::String("object".to_string())
+        );
     }
 
     #[test]
@@ -418,7 +433,7 @@ mod tests {
             .max_keyword(3)
             .force_search(true)
             .limit(5);
-        
+
         assert_eq!(tool.tool_type, ToolType::WebSearch);
         assert_eq!(tool.max_keyword, Some(3));
         assert_eq!(tool.force_search, Some(true));
@@ -427,10 +442,8 @@ mod tests {
 
     #[test]
     fn test_web_search_serialization() {
-        let tool = Tool::web_search()
-            .max_keyword(3)
-            .force_search(true);
-        
+        let tool = Tool::web_search().max_keyword(3).force_search(true);
+
         let json = serde_json::to_string(&tool).unwrap();
         assert!(json.contains("\"type\":\"web_search\""));
         assert!(json.contains("\"max_keyword\":3"));
@@ -443,7 +456,7 @@ mod tests {
             .country("China")
             .region("Hubei")
             .city("Wuhan");
-        
+
         assert_eq!(location.location_type, "approximate");
         assert_eq!(location.country, Some("China".to_string()));
         assert_eq!(location.region, Some("Hubei".to_string()));
@@ -452,10 +465,8 @@ mod tests {
 
     #[test]
     fn test_user_location_serialization() {
-        let location = UserLocation::approximate()
-            .country("China")
-            .city("Beijing");
-        
+        let location = UserLocation::approximate().country("China").city("Beijing");
+
         let json = serde_json::to_string(&location).unwrap();
         assert!(json.contains("\"type\":\"approximate\""));
         assert!(json.contains("\"country\":\"China\""));
@@ -465,13 +476,12 @@ mod tests {
 
     #[test]
     fn test_web_search_with_location() {
-        let tool = Tool::web_search()
-            .user_location(
-                UserLocation::approximate()
-                    .country("China")
-                    .city("Shanghai"),
-            );
-        
+        let tool = Tool::web_search().user_location(
+            UserLocation::approximate()
+                .country("China")
+                .city("Shanghai"),
+        );
+
         assert!(tool.user_location.is_some());
         let loc = tool.user_location.unwrap();
         assert_eq!(loc.country, Some("China".to_string()));
