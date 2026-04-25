@@ -3,8 +3,12 @@
 //! This module provides types for configuring audio output, particularly for
 //! text-to-speech (TTS) synthesis using the `mimo-v2-tts` model.
 
-use crate::error::Result;
-use serde::{Deserialize, Serialize};
+use {
+    crate::error::{Error, Result},
+    base64::prelude::*,
+    serde::{Deserialize, Serialize},
+    tokio::fs::read,
+};
 
 /// Audio output format.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
@@ -15,21 +19,121 @@ pub enum AudioFormat {
     Wav,
     /// MP3 format (smaller file size)
     Mp3,
-    /// PCM format (for streaming)
+    /// PCM format (for streaming, maps to pcm16)
     Pcm,
+    /// PCM16 format (16-bit PCM, for streaming)
+    #[serde(rename = "pcm16")]
+    Pcm16,
 }
 
+//noinspection SpellCheckingInspection
 /// Available voice options for text-to-speech.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[serde(rename_all = "snake_case")]
+///
+/// This enum supports both preset voices and custom voices (for voice cloning).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub enum Voice {
     /// MiMo default voice - balanced tone
     #[default]
     MimoDefault,
-    /// Default English female voice
+    /// Default English female voice (legacy)
     DefaultEn,
-    /// Default Chinese female voice
+    /// Default Chinese female voice (legacy)
     DefaultZh,
+    /// 冰糖 - Chinese female voice
+    Bingtang,
+    /// 茉莉 - Chinese female voice
+    Moli,
+    /// 苏打 - Chinese male voice
+    Suda,
+    /// 白桦 - Chinese male voice
+    Baihua,
+    /// Mia - English female voice
+    Mia,
+    /// Chloe - English female voice
+    Chloe,
+    /// Milo - English male voice
+    Milo,
+    /// Dean - English male voice
+    Dean,
+    /// Custom voice string (for voice cloning with base64 audio)
+    Custom(String),
+}
+
+impl Voice {
+    /// Create a custom voice from a string (for voice cloning).
+    ///
+    /// The string should be in the format: `data:{MIME_TYPE};base64,$BASE64_AUDIO`
+    pub fn custom<S: Into<String>>(voice: S) -> Self {
+        Voice::Custom(voice.into())
+    }
+
+    /// Create a voice clone from an audio file path.
+    ///
+    /// Reads the audio file, encodes it as base64, and creates a custom voice string.
+    /// Supported formats: MP3, WAV.
+    pub async fn from_audio_file<P: AsRef<std::path::Path>>(path: P) -> Result<Self> {
+        let path = path.as_ref();
+        let data = read(path).await?;
+
+        let mime_type = match path.extension().and_then(|ext| ext.to_str()) {
+            Some("mp3") => "audio/mpeg",
+            Some("wav") => "audio/wav",
+            _ => return Err(Error::InvalidParameter("Unsupported audio format".into())),
+        };
+
+        let base64_audio = BASE64_STANDARD.encode(&data);
+        let voice_str = format!("data:{};base64,{}", mime_type, base64_audio);
+
+        Ok(Voice::Custom(voice_str))
+    }
+}
+
+// Manual Serialize implementation for Voice
+impl Serialize for Voice {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let s = match self {
+            Voice::MimoDefault => "mimo_default",
+            Voice::DefaultEn => "default_en",
+            Voice::DefaultZh => "default_zh",
+            Voice::Bingtang => "冰糖",
+            Voice::Moli => "茉莉",
+            Voice::Suda => "苏打",
+            Voice::Baihua => "白桦",
+            Voice::Mia => "Mia",
+            Voice::Chloe => "Chloe",
+            Voice::Milo => "Milo",
+            Voice::Dean => "Dean",
+            Voice::Custom(s) => s.as_str(),
+        };
+        serializer.serialize_str(s)
+    }
+}
+
+// Manual Deserialize implementation for Voice
+impl<'de> Deserialize<'de> for Voice {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(match s.as_str() {
+            "mimo_default" => Voice::MimoDefault,
+            "default_en" => Voice::DefaultEn,
+            "default_zh" => Voice::DefaultZh,
+            "冰糖" => Voice::Bingtang,
+            "茉莉" => Voice::Moli,
+            "苏打" => Voice::Suda,
+            "白桦" => Voice::Baihua,
+            "Mia" => Voice::Mia,
+            "Chloe" => Voice::Chloe,
+            "Milo" => Voice::Milo,
+            "Dean" => Voice::Dean,
+            _ => Voice::Custom(s),
+        })
+    }
 }
 
 /// Audio output configuration for text-to-speech.
@@ -88,6 +192,11 @@ impl Audio {
     pub fn pcm() -> Self {
         Self::new().format(AudioFormat::Pcm)
     }
+
+    /// Create audio configuration with PCM16 format (16-bit PCM, for streaming).
+    pub fn pcm16() -> Self {
+        Self::new().format(AudioFormat::Pcm16)
+    }
 }
 
 impl Default for Audio {
@@ -136,7 +245,9 @@ impl ResponseAudio {
     /// ```
     pub fn decode_data(&self) -> Result<Vec<u8>> {
         use base64::Engine;
-        base64::engine::general_purpose::STANDARD.decode(&self.data).map_err(Into::into)
+        base64::engine::general_purpose::STANDARD
+            .decode(&self.data)
+            .map_err(Into::into)
     }
 
     /// Get the transcript of the synthesized text.
@@ -177,7 +288,9 @@ impl DeltaAudio {
     /// Decode the base64 audio data to bytes.
     pub fn decode_data(&self) -> Result<Vec<u8>> {
         use base64::Engine;
-        base64::engine::general_purpose::STANDARD.decode(&self.data).map_err(Into::into)
+        base64::engine::general_purpose::STANDARD
+            .decode(&self.data)
+            .map_err(Into::into)
     }
 }
 
@@ -297,7 +410,10 @@ mod tests {
 
     #[test]
     fn test_tts_style_multiple() {
-        let text = TtsStyle::new().with_style("开心").with_style("变快").apply("Hello");
+        let text = TtsStyle::new()
+            .with_style("开心")
+            .with_style("变快")
+            .apply("Hello");
         assert!(text.starts_with("<style>"));
         assert!(text.contains("开心"));
         assert!(text.contains("变快"));

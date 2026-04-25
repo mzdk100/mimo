@@ -1,6 +1,6 @@
 [package]
 name = "mimo-api"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 description = "Xiaomi MiMo API client library for Rust"
 authors = ["SmileSky <mzdk100@foxmail.com>"]
@@ -16,7 +16,7 @@ exclude = ["examples/*", "tests/*", "*.wav", "*.mp3", "docs.html", "tts.md"]
 reqwest = { version = "0.13.2", default-features = false, features = ["json", "native-tls", "stream"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
-tokio = { version = "1.51.0", features = ["full"] }
+tokio = { version = "1.52.1", features = ["full"] }
 futures = "0.3.32"
 thiserror = "2.0.18"
 eventsource-stream = "0.2.3"

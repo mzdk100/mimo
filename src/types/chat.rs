@@ -7,11 +7,21 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub enum Model {
+    /// MiMo V2.5 Pro - Latest flagship model
+    MiMoV25Pro,
+    /// MiMo V2.5 - Balanced performance model
+    MiMoV25,
+    /// MiMo V2.5 TTS - Text-to-speech with preset voices
+    MiMoV25Tts,
+    /// MiMo V2.5 TTS VoiceDesign - Voice design via text description
+    MiMoV25TtsVoiceDesign,
+    /// MiMo V2.5 TTS VoiceClone - Voice cloning via audio sample
+    MiMoV25TtsVoiceClone,
     /// MiMo V2 Pro - Agent-oriented flagship model
     MiMoV2Pro,
     /// MiMo V2 Omni - Multi-modal agent model
     MiMoV2Omni,
-    /// MiMo V2 TTS - Text-to-speech model
+    /// MiMo V2 TTS - Text-to-speech model (legacy)
     MiMoV2Tts,
     /// MiMo V2 Flash - Fast and efficient model
     MiMoV2Flash,
@@ -21,6 +31,11 @@ impl Model {
     /// Get the model identifier string.
     pub fn as_str(&self) -> &'static str {
         match self {
+            Model::MiMoV25Pro => "mimo-v2.5-pro",
+            Model::MiMoV25 => "mimo-v2.5",
+            Model::MiMoV25Tts => "mimo-v2.5-tts",
+            Model::MiMoV25TtsVoiceDesign => "mimo-v2.5-tts-voicedesign",
+            Model::MiMoV25TtsVoiceClone => "mimo-v2.5-tts-voiceclone",
             Model::MiMoV2Pro => "mimo-v2-pro",
             Model::MiMoV2Omni => "mimo-v2-omni",
             Model::MiMoV2Tts => "mimo-v2-tts",
@@ -38,6 +53,11 @@ impl std::fmt::Display for Model {
 impl From<&str> for Model {
     fn from(s: &str) -> Self {
         match s {
+            "mimo-v2.5-pro" => Model::MiMoV25Pro,
+            "mimo-v2.5" => Model::MiMoV25,
+            "mimo-v2.5-tts" => Model::MiMoV25Tts,
+            "mimo-v2.5-tts-voicedesign" => Model::MiMoV25TtsVoiceDesign,
+            "mimo-v2.5-tts-voiceclone" => Model::MiMoV25TtsVoiceClone,
             "mimo-v2-pro" => Model::MiMoV2Pro,
             "mimo-v2-omni" => Model::MiMoV2Omni,
             "mimo-v2-tts" => Model::MiMoV2Tts,
@@ -241,12 +261,37 @@ impl ChatRequest {
         Self::new(Model::MiMoV2Pro.as_str())
     }
 
+    /// Create a chat request with the MiMo V2.5 Pro model.
+    pub fn v25_pro() -> Self {
+        Self::new(Model::MiMoV25Pro.as_str())
+    }
+
+    /// Create a chat request with the MiMo V2.5 model.
+    pub fn v25() -> Self {
+        Self::new(Model::MiMoV25.as_str())
+    }
+
     /// Create a chat request with the MiMo V2 Omni model.
     pub fn omni() -> Self {
         Self::new(Model::MiMoV2Omni.as_str())
     }
 
-    /// Create a chat request with the MiMo V2 TTS model.
+    /// Create a chat request with the MiMo V2.5 TTS model (preset voices).
+    pub fn v25_tts() -> Self {
+        Self::new(Model::MiMoV25Tts.as_str())
+    }
+
+    /// Create a chat request with the MiMo V2.5 TTS VoiceDesign model.
+    pub fn v25_tts_voicedesign() -> Self {
+        Self::new(Model::MiMoV25TtsVoiceDesign.as_str())
+    }
+
+    /// Create a chat request with the MiMo V2.5 TTS VoiceClone model.
+    pub fn v25_tts_voiceclone() -> Self {
+        Self::new(Model::MiMoV25TtsVoiceClone.as_str())
+    }
+
+    /// Create a chat request with the MiMo V2 TTS model (legacy).
     pub fn tts() -> Self {
         Self::new(Model::MiMoV2Tts.as_str())
     }
@@ -397,6 +442,11 @@ mod tests {
 
     #[test]
     fn test_model_as_str() {
+        assert_eq!(Model::MiMoV25Pro.as_str(), "mimo-v2.5-pro");
+        assert_eq!(Model::MiMoV25.as_str(), "mimo-v2.5");
+        assert_eq!(Model::MiMoV25Tts.as_str(), "mimo-v2.5-tts");
+        assert_eq!(Model::MiMoV25TtsVoiceDesign.as_str(), "mimo-v2.5-tts-voicedesign");
+        assert_eq!(Model::MiMoV25TtsVoiceClone.as_str(), "mimo-v2.5-tts-voiceclone");
         assert_eq!(Model::MiMoV2Pro.as_str(), "mimo-v2-pro");
         assert_eq!(Model::MiMoV2Omni.as_str(), "mimo-v2-omni");
         assert_eq!(Model::MiMoV2Tts.as_str(), "mimo-v2-tts");
@@ -405,6 +455,8 @@ mod tests {
 
     #[test]
     fn test_model_from_str() {
+        assert_eq!(Model::from("mimo-v2.5-pro"), Model::MiMoV25Pro);
+        assert_eq!(Model::from("mimo-v2.5-tts"), Model::MiMoV25Tts);
         assert_eq!(Model::from("mimo-v2-pro"), Model::MiMoV2Pro);
         assert_eq!(Model::from("mimo-v2-flash"), Model::MiMoV2Flash);
         assert_eq!(Model::from("unknown"), Model::MiMoV2Flash);
@@ -412,7 +464,7 @@ mod tests {
 
     #[test]
     fn test_model_display() {
-        assert_eq!(format!("{}", Model::MiMoV2Pro), "mimo-v2-pro");
+        assert_eq!(format!("{}", Model::MiMoV25Pro), "mimo-v2.5-pro");
     }
 
     #[test]

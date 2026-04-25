@@ -9,6 +9,7 @@ use {
     futures::{StreamExt, stream::BoxStream},
     reqwest::header::{CONTENT_TYPE, HeaderMap, HeaderValue},
     std::env,
+    tokio::{fs::File, io::AsyncWriteExt},
 };
 
 const API_BASE_URL: &str = "https://api.xiaomimimo.com/v1";
@@ -223,12 +224,12 @@ impl Client {
     ///     
     ///     let audio = response.audio()?;
     ///     let audio_bytes = audio.decode_data()?;
-    ///     std::fs::write("output.wav", audio_bytes)?;
+    ///     tokio::fs::write("output.wav", audio_bytes).await?;
     ///     Ok(())
     /// }
     /// ```
     pub fn tts(&self, text: impl Into<String>) -> TtsRequestBuilder {
-        TtsRequestBuilder::new(self.clone(), text.into())
+        TtsRequestBuilder::new(self.clone(), Model::MiMoV2Tts.as_str(), text.into())
     }
 
     /// Create a text-to-speech request builder with styled text.
@@ -252,12 +253,124 @@ impl Client {
     ///
     ///     let audio = response.audio()?;
     ///     let audio_bytes = audio.decode_data()?;
-    ///     std::fs::write("output.wav", audio_bytes)?;
+    ///     tokio::fs::write("output.wav", audio_bytes).await?;
     ///     Ok(())
     /// }
     /// ```
     pub fn tts_styled(&self, style: &str, text: &str) -> TtsRequestBuilder {
-        TtsRequestBuilder::new(self.clone(), styled_text(style, text))
+        TtsRequestBuilder::new(
+            self.clone(),
+            Model::MiMoV2Tts.as_str(),
+            styled_text(style, text),
+        )
+    }
+
+    /// Create a text-to-speech request builder using the MiMo V2.5 TTS model.
+    ///
+    /// This method uses the updated TTS model with more preset voices.
+    ///
+    /// # Arguments
+    ///
+    /// * `text` - The text to synthesize.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use mimo_api::{Client, Voice};
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let client = Client::from_env()?;
+    ///
+    ///     let response = client.v25_tts("Hello, world!")
+    ///         .voice(Voice::Mia)
+    ///         .send()
+    ///         .await?;
+    ///
+    ///     let audio = response.audio()?;
+    ///     let audio_bytes = audio.decode_data()?;
+    ///     tokio::fs::write("output.wav", audio_bytes).await?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn v25_tts(&self, text: impl Into<String>) -> TtsRequestBuilder {
+        TtsRequestBuilder::new(self.clone(), Model::MiMoV25Tts.as_str(), text.into())
+    }
+
+    /// Create a TTS request builder with voice design (MiMo V2.5 TTS VoiceDesign).
+    ///
+    /// This method uses text description to design a custom voice.
+    /// The `user_message` is REQUIRED and should contain the voice description.
+    ///
+    /// # Arguments
+    ///
+    /// * `text` - The text to synthesize.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use mimo_api::Client;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let client = Client::from_env()?;
+    ///
+    ///     let response = client.v25_tts_voice_design("Hello, world!")
+    ///         .user_message("Give me a young male tone.")
+    ///         .send()
+    ///         .await?;
+    ///
+    ///     let audio = response.audio()?;
+    ///     let audio_bytes = audio.decode_data()?;
+    ///     tokio::fs::write("output.wav", audio_bytes).await?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn v25_tts_voice_design(&self, text: impl Into<String>) -> TtsRequestBuilder {
+        TtsRequestBuilder::new(
+            self.clone(),
+            Model::MiMoV25TtsVoiceDesign.as_str(),
+            text.into(),
+        )
+    }
+
+    /// Create a TTS request builder with voice clone (MiMo V2.5 TTS VoiceClone).
+    ///
+    /// This method uses an audio sample to clone a voice.
+    /// Use `Voice::custom()` or `Voice::from_audio_file()` to set the voice.
+    ///
+    /// # Arguments
+    ///
+    /// * `text` - The text to synthesize.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use mimo_api::{Client, Voice};
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let client = Client::from_env()?;
+    ///
+    ///     let voice = Voice::from_audio_file("voice_sample.mp3").await?;
+    ///
+    ///     let response = client.v25_tts_voice_clone("Hello, world!")
+    ///         .voice(voice)
+    ///         .send()
+    ///         .await?;
+    ///
+    ///     let audio = response.audio()?;
+    ///     let audio_bytes = audio.decode_data()?;
+    ///     tokio::fs::write("output.wav", audio_bytes).await?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn v25_tts_voice_clone(&self, text: impl Into<String>) -> TtsRequestBuilder {
+        TtsRequestBuilder::new(
+            self.clone(),
+            Model::MiMoV25TtsVoiceClone.as_str(),
+            text.into(),
+        )
     }
 
     /// Create a streaming text-to-speech request builder.
@@ -300,7 +413,7 @@ impl Client {
     /// }
     /// ```
     pub fn tts_stream(&self, text: impl Into<String>) -> StreamingTtsRequestBuilder {
-        StreamingTtsRequestBuilder::new(self.clone(), text.into())
+        StreamingTtsRequestBuilder::new(self.clone(), Model::MiMoV2Tts.as_str(), text.into())
     }
 
     /// Create a streaming text-to-speech request builder with styled text.
@@ -344,7 +457,47 @@ impl Client {
     /// }
     /// ```
     pub fn tts_styled_stream(&self, style: &str, text: &str) -> StreamingTtsRequestBuilder {
-        StreamingTtsRequestBuilder::new(self.clone(), styled_text(style, text))
+        StreamingTtsRequestBuilder::new(
+            self.clone(),
+            Model::MiMoV2Tts.as_str(),
+            styled_text(style, text),
+        )
+    }
+
+    /// Create a streaming TTS request builder using MiMo V2.5 TTS model.
+    ///
+    /// Note: Low-latency streaming for V2.5 TTS series is not yet available.
+    /// The streaming API currently returns results in compatibility mode.
+    pub fn v25_tts_stream(&self, text: impl Into<String>) -> StreamingTtsRequestBuilder {
+        StreamingTtsRequestBuilder::new(self.clone(), Model::MiMoV25Tts.as_str(), text.into())
+    }
+
+    /// Create a streaming TTS request builder with voice design.
+    ///
+    /// Note: Low-latency streaming for V2.5 TTS series is not yet available.
+    pub fn v25_tts_voice_design_stream(
+        &self,
+        text: impl Into<String>,
+    ) -> StreamingTtsRequestBuilder {
+        StreamingTtsRequestBuilder::new(
+            self.clone(),
+            Model::MiMoV25TtsVoiceDesign.as_str(),
+            text.into(),
+        )
+    }
+
+    /// Create a streaming TTS request builder with voice clone.
+    ///
+    /// Note: Low-latency streaming for V2.5 TTS series is not yet available.
+    pub fn v25_tts_voice_clone_stream(
+        &self,
+        text: impl Into<String>,
+    ) -> StreamingTtsRequestBuilder {
+        StreamingTtsRequestBuilder::new(
+            self.clone(),
+            Model::MiMoV25TtsVoiceClone.as_str(),
+            text.into(),
+        )
     }
 }
 
@@ -354,6 +507,7 @@ impl Client {
 #[derive(Debug, Clone)]
 pub struct TtsRequestBuilder {
     client: Client,
+    model: String,
     text: String,
     user_message: Option<String>,
     voice: Voice,
@@ -362,9 +516,10 @@ pub struct TtsRequestBuilder {
 
 impl TtsRequestBuilder {
     /// Create a new TTS request builder.
-    fn new(client: Client, text: String) -> Self {
+    fn new(client: Client, model: impl Into<String>, text: String) -> Self {
         Self {
             client,
+            model: model.into(),
             text,
             user_message: None,
             voice: Voice::default(),
@@ -440,13 +595,27 @@ impl TtsRequestBuilder {
         // Add assistant message with text to synthesize
         messages.push(Message::assistant(MessageContent::Text(self.text)));
 
-        let request = ChatRequest {
-            model: Model::MiMoV2Tts.to_string(),
-            messages,
-            audio: Some(Audio {
+        // Voice design model does not support audio.voice parameter
+        // Model name is "mimo-v2.5-tts-voicedesign" (no hyphen between voice and design)
+        let is_voice_design = self.model.contains("voicedesign");
+
+        let audio = if is_voice_design {
+            // Voice design model only supports format, not voice
+            Some(Audio {
+                format: Some(self.format),
+                voice: None,
+            })
+        } else {
+            Some(Audio {
                 format: Some(self.format),
                 voice: Some(self.voice),
-            }),
+            })
+        };
+
+        let request = ChatRequest {
+            model: self.model,
+            messages,
+            audio,
             ..Default::default()
         };
 
@@ -490,6 +659,7 @@ impl TtsResponse {
 #[derive(Debug, Clone)]
 pub struct StreamingTtsRequestBuilder {
     client: Client,
+    model: String,
     text: String,
     user_message: Option<String>,
     voice: Voice,
@@ -497,9 +667,10 @@ pub struct StreamingTtsRequestBuilder {
 
 impl StreamingTtsRequestBuilder {
     /// Create a new streaming TTS request builder.
-    fn new(client: Client, text: String) -> Self {
+    fn new(client: Client, model: impl Into<String>, text: String) -> Self {
         Self {
             client,
+            model: model.into(),
             text,
             user_message: None,
             voice: Voice::default(),
@@ -609,11 +780,11 @@ impl StreamingTtsRequestBuilder {
         messages.push(Message::assistant(MessageContent::Text(self.text)));
 
         let request = ChatRequest {
-            model: Model::MiMoV2Tts.to_string(),
+            model: self.model,
             messages,
             stream: Some(true),
             audio: Some(Audio {
-                format: Some(AudioFormat::Pcm), // PCM is recommended for streaming
+                format: Some(AudioFormat::Pcm16), // PCM16 is recommended for streaming
                 voice: Some(self.voice),
             }),
             ..Default::default()
@@ -701,9 +872,6 @@ impl StreamingTtsResponse {
     /// }
     /// ```
     pub async fn save_to_file<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<()> {
-        use tokio::fs::File;
-        use tokio::io::AsyncWriteExt;
-
         let mut file = File::create(path).await?;
 
         while let Some(chunk) = self.stream.next().await {
@@ -752,7 +920,11 @@ impl futures::Stream for StreamingTtsResponse {
             match std::pin::Pin::new(&mut self.stream).poll_next(cx) {
                 std::task::Poll::Ready(Some(Ok(chunk))) => {
                     // Check if this is the final chunk with finish_reason
-                    let is_final = chunk.choices.first().and_then(|c| c.finish_reason.as_ref()).is_some();
+                    let is_final = chunk
+                        .choices
+                        .first()
+                        .and_then(|c| c.finish_reason.as_ref())
+                        .is_some();
 
                     match self.process_chunk(chunk) {
                         Ok(Some(bytes)) => {
